@@ -48,7 +48,7 @@ var main = function(req, res){
 
 var http = require("http");
 setInterval(function() {
-    http.get("https://serene-stream-70888.herokuapp.com");
+    http.get("https://niko-flights.herokuapp.com");
 }, 300000); // every 5 minutes (300000)
 
 
