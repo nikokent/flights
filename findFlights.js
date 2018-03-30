@@ -1,12 +1,14 @@
 var express = require('express'); 
 var bodyParser = require('body-parser');
 const request = require('request');
+var cors = require('cors');
 
 var app = express();
 var router = express.Router();
 var port = process.env.PORT || 3000;
 
 app.use(bodyParser.json());
+app.use(cors());
 
 var testLocations = ["hnl", "nyc", "CUN", "JP", "IE", "PT", "sjd", "MX", "NL", "DK", "FR", "HR", "TH", "TR", "IT", "GR", "IS" ]
 
