@@ -1,64 +1,234 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
+<head>
+  <title>Flights</title>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://www.w3schools.com/w3css/4/w3.css">
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+  <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+</head>
     <body>
-        <h1 id="title">Here are your flight:</h1>
-        <div ng-app="myApp" ng-controller="ctrl">
-            <p>{{myWelcome}}</p>
+        <button id="float-btn" class="float fa fa-plane my-float ripple" data-toggle="popover" title="Search New Flight" data-content="And here's stuff"></button>
+        <div class="bannerimage text-center">
+                <img src='flights-banner.png' class="img-fluid w3-card-4" alt="Responsive image">
+        </div>
+        <div class="container">
+            <div class="row">
+                <div class="col-sm-12" id="card" ng-app="myApp" ng-controller="ctrl">
+                    <p id="mainText"></p>
+                </div>
+            </div>
         </div>
     </body>
 </html>
-<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.4/angular.min.js"></script>
+<script src="https://ajax.googleapis.com/ajax/libs/angularjs/1.6.9/angular.min.js"></script>
 
 <script>
+    var test = function floatClick(){
+        document.getElementById('id01').style.display='block';
+    }
+
+    var floatbtn = document.getElementById('float-btn');
+    floatbtn.onclick = test;
+
+    function formatDate(date) {
+        var year = date.substring(0,4);
+        var mon = date.substring(5,7);
+        var day = date.substring(8,10);
+        return [mon,day,year].join('/');
+    }
+    var travelDetails = function(data){
+        result = {};
+        for(var i = 0; i < Object.keys(data['Quotes']).length; i++){
+            temp = {}
+            for((index) in data['Places']){
+                if(data['Places'][index]['PlaceId'] == data['Quotes'][i]['OutboundLeg']['OriginId']){
+                    temp['origin-code'] = data['Places'][index]['IataCode'];
+                }
+                if(data['Places'][index]['PlaceId'] == data['Quotes'][i]['OutboundLeg']['DestinationId']){
+                    temp['destination-code'] = data['Places'][index]['IataCode'];
+                    temp['location'] = data['Places'][index]['Name'];
+                }
+            }
+            temp['price'] = data['Quotes'][i]['MinPrice'];
+            var d = new Date(data['Quotes'][i]['OutboundLeg']['DepartureDate'] + 'Z');
+            temp['google-depart-date'] = data['Quotes'][i]['OutboundLeg']['DepartureDate'].substring(0,10);
+            temp['depart-date'] = formatDate(data['Quotes'][i]['OutboundLeg']['DepartureDate'].substring(0,10));
+            d = new Date(data['Quotes'][i]['InboundLeg']['DepartureDate'] + 'Z');
+            temp['arrive-date'] = formatDate(data['Quotes'][i]['InboundLeg']['DepartureDate'].substring(0,10));
+            temp['google-arrive-date'] = data['Quotes'][i]['InboundLeg']['DepartureDate'].substring(0,10);
+            for((airlines) in data['Carriers']){
+                if(data['Carriers'][airlines]['CarrierId'] == data['Quotes'][i]['OutboundLeg']['CarrierIds'][0]){
+                    temp['depart-airline'] = data['Carriers'][airlines]['Name'];
+                }
+                if(data['Carriers'][airlines]['CarrierId'] == data['Quotes'][i]['InboundLeg']['CarrierIds'][0]){
+                    temp['arrive-airline'] = data['Carriers'][airlines]['Name'];
+                }
+            }
+            result[i] = temp;
+            console.log(result);
+        }
+        return result;
+    }
+
+    var removeFluff = function(data){
+        result = {}
+        count = 0;
+        for (i in data){
+            var date1 = new Date(data[i]['depart-date']);
+            var date2 = new Date(data[i]['arrive-date']);
+            var timeDiff = Math.abs(date2.getTime() - date1.getTime());
+            var diffDays = Math.ceil(timeDiff / (1000 * 3600 * 24)); 
+            if(diffDays >= 3 && diffDays <= 16){
+                result[count] = data[i];
+                count += 1;
+            }
+            data[i]['length'] = diffDays;
+        }
+        return result;
+    }
+
+    var createCard = function(info, completion){
+
+        var container = document.createElement('div');
+        container.className = 'col-lg-12  w3-animate-bottom';
+        container.style = "width:100%; padding-bottom: 4%";
+        var div = document.createElement('div');
+        div.className = 'w3-card-4';
+        div.style = 'width:85%; margin:auto; border-radius: 3px;';
+        //var backdrop = document.createElement('img');
+        //backdrop.src = '/images/hawaii.jpg';
+       // backdrop.style = "width:100%";
+        var title = document.createElement('h5');
+        title.className = 'card-title';
+        title.innerText = '$' + info['price'];
+        var label = document.createElement('p');
+        label.className = 'card-text';
+        label.innerHTML = 'From Seattle to '+ info['location'] +' from Dates: ' + info['depart-date'] +
+         '  to  ' + info['arrive-date']+ ' (' + info['length'] + ' Days)' + '<br> Starting Carrier: ' + info['depart-airline'] +
+             ' and Returning Carrier: ' + info['arrive-airline'];
+        label.style = "width:100%";
+        var button = document.createElement("button");
+        button.type = 'button';
+        var googleFlight = function(){
+            var url = "https://www.google.com/flights/#flt="+ info['origin-code'] +"."+ info['destination-code'] +
+            "."+ info['google-depart-date'].substring(0,10) +"*"+ info['destination-code'] +"."+ info['origin-code'] +
+            "."+ info['google-arrive-date'].substring(0,10) +";c:USD;e:1;sd:1;t:f"
+            Object.assign(document.createElement('a'), { target: '_blank', href: url}).click();
+        }
+        var body = document.createElement('div');
+        body.className = "card-body";
+        body.appendChild(title);
+        body.appendChild(label);
+        body.appendChild(button);
+        button.onclick = function(){googleFlight()};
+        button.innerHTML = "Check Google Flights";
+        button.className = 'btn btn-primary';
+        div.appendChild(body);
+        container.appendChild(div);
+        document.body.appendChild(container);
+        completion()
+    }
+
+    var searchCard = function(){
+        var container = document.createElement('div');
+        var modal = document.createElement('div');
+        modal.className = 'w3-modal';
+        modal.id = 'id01';
+        container.className = 'col-lg-12  w3-modal-content';
+        container.style = "padding-bottom: 5%; background-color: transparent; padding-top: 12%";
+        var div = document.createElement('div');
+        div.className = 'w3-card-4 w3-middle';
+        var body = document.createElement('div');
+        body.className = 'card-body';
+        div.style = 'width:80%; margin: 0 auto; background-color: white;';
+        var icon = document.createElement('i');
+        icon.className = 'fa fa-close';
+        icon.onclick = function(){document.getElementById('id01').style.display='none';};
+        icon.style = "float:right; position: relative; top: 0px; right: 0px; z-index:99;"
+        var input = document.createElement('input');
+        input.type = "text";
+        input.className = 'w3-input';
+        input.style = "padding-bottom: 3px; outline:none; background: transparent; border-radius: 0px";
+        input.id = "iata";
+        var label = document.createElement('label');
+        label.innerText = "Enter IATA Code of Destination:";
+        var button = document.createElement('button');
+        button.style = "padding-top: 6px; position: relative";
+        button.innerHTML = "Search Deals";
+        button.className = 'btn btn-info';
+        var newFlight = function(){
+            url = "flights.html?location=" + input.value;
+            Object.assign(document.createElement('a'), { target: '_self', href: url}).click();
+        }
+        button.onclick = function(){newFlight()};
+        body.appendChild(icon);
+        body.appendChild(label);
+        body.appendChild(input);
+        body.appendChild(button);
+        div.appendChild(body);
+        container.appendChild(div);
+        modal.appendChild(container);
+        document.body.appendChild(modal);
+    }
+
     var app = angular.module('myApp', []);
+
     app.controller('ctrl', function($scope, $http) {
-        $scope.name= "John";
+        function getQueryVariable(variable)
+        {
+            var query = window.location.search.substring(1);
+            var vars = query.split("&");
+            for (var i=0;i<vars.length;i++) {
+                    var pair = vars[i].split("=");
+                    if(pair[0] == variable){return pair[1];}
+            }
+            return(false);
+        }
+        var location = getQueryVariable('location');
+        if(location == false){
+            location = 'hnl';
+        }
         $http({
             method : "POST",
-            url : "https://niko-flights.herokuapp.com/",
+            url : "check.php",
             data: {
-                'origin': 'sea',
-                'locations': ['hnl']
+                origin: 'sea',
+                'locations': location
               },
-            headers: { 'Content-Type': 'application/x-www-form-urlencoded' }
+            headers: { 'Content-Type': 'application/json'}
         }).then(function mySuccess(response) {
-            alert(response.data);
-            $scope.myWelcome = response.data;
+            var temp = response.data;
+            var data = response.data;
+            //document.getElementById('mainText').innerText = JSON.stringify(temp['Carriers']);
+            var count = Object.keys(data['Quotes']).length;
+            for(var i = 0; i < count; i++){
+                for(var j = i + 1; j < count;j++){
+                    if (data['Quotes'][j]['MinPrice'] < data['Quotes'][i]['MinPrice']){
+                        temp = data['Quotes'][j];
+                        data['Quotes'][j] = data['Quotes'][i];
+                        data['Quotes'][i] = temp;
+                    }
+                }
+            }
+            var sortedData = data;
+            var n = 5;
+            var convertedData = removeFluff(travelDetails(sortedData));
+            for(var i = 0; i < n;){
+                createCard(convertedData[i], function(){
+                    i+= 1;
+                });
+            }
+            searchCard();
         }, function myError(response) {
-            $scope.myWelcome = response.statusText;
+            console.log(response.statusText);
         });
     });
 </script>
         
-
-
-<script> 
-    
-
-
-
-/*
-        function redirectWithPost(data){
-            var form = document.createElement('form');
-            form.method = 'POST';
-            form.action = 'https://niko-flights.herokuapp.com/';
-    
-            for(var key in data){
-                var input = document.createElement('input');
-                input.name = key;
-                input.value = data[key];
-                input.type = 'hidden';
-                form.appendChild(input)
-            }
-            document.body.appendChild(form);
-            form.submit();
-        }
-        redirectWithPost({
-            "sea":["hnl"]
-        });
-        */
-</script>
-
 <style>
     #title{
         text-align: center;
@@ -67,5 +237,83 @@
         width: 100%;
         padding-top: 2%;
     };
+    #mainText{
+        width: 100%;
+        margin: 0 auto;
+        padding-left: 10px;
+        padding-right: 10px;
+        text-align: center;
+    };
+    .container{
+        width: 100%;
+        margin: auto;
+    };
+    #card{
+        background-color: red;
+        width: 100%;
+        height: 100%;
+        position: relative;
+        margin: 0 auto;
+    };
+    #myButton{
+        right: 400px;
+        position:relative;
+    };
+    input[type="text"]:focus,
+    input[type="password"]:focus,
+    input[type="email"]:focus,
+    input[type="tel"]:focus,
+    input[type="url"]:focus,
+    input[type="search"]:focus,
+    textarea:focus {
+        border: 1px solid #ccc;
+        box-shadow: none !important;
+        outline: none !important;
+    }
+    .bannerimage {
+        padding-top: 4%;
+        padding-bottom: 3%;
+        width: 100%;
+        height: 20%;
+        background-color: white;
+        background-position: center;
+    }
+    .float{
+        position:fixed;
+        width:60px;
+        height:60px;
+        bottom:5%;
+        right:5%;
+        outline: none;
+        z-index:99;
+        background-color:#2196f3;
+        color:#FFF;
+        border-radius:50px;
+        align-content:center;
+        box-shadow: 2px 2px 3px #999;
+        display:block;
+        transition: background 0.8s;
+        margin-top:22px;
+        border: none !important;
+        font-size: 1.6em;
+    }
+    button:focus{
+        outline: none !important;
+    }
+    /* Ripple effect */
+.ripple {
+    background-position: center;
+    transition: background 0.8s;
+  }
+  .ripple:hover {
+    background: #47a7f5 radial-gradient(circle, transparent 1%, #47a7f5 1%) center/15000%;
+  }
+  .ripple:active {
+    background-color: #6eb9f7;
+    background-size: 100%;
+    transition: background 0s;
+  }
+  
+
 </style>
 

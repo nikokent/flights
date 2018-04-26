@@ -33,6 +33,8 @@ def flight(start, end):
     destination = places[result]["Name"]
     return( "Cheapest Flight Round trip from ({0}) to ({1}) will cost {2} on leaving: {3} and returning: {4}".format(origin, destination, minPrice, departDate[:10], returnDate[:10]))
 
-destinations = ["hnl", "nyc", "CUN", "JP", "IE", "PT", "sjd", "MX", "NL", "DK", "FR", "HR", "TH", "TR", "IT", "GR", "IS" ]
+destinations = ["lih", "sju", "del", "JP", "IE", "PT", "sjd", "MX", "NL", "DK", "FR", "HR", "TH", "TR", "IT", "GR", "IS" ]
 for val in destinations:
     print(flight("sea", val))
+#flight("sea", "BNE");
+

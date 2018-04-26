@@ -9,6 +9,10 @@ var port = process.env.PORT || 6666;
 
 app.use(bodyParser.json());
 
+app.route('/').get(function(req,res){
+    res.send("Hello There Friend");
+});
+
 var testLocations = ["hnl", "nyc", "CUN", "JP", "IE", "PT", "sjd", "MX", "NL", "DK", "FR", "HR", "TH", "TR", "IT", "GR", "IS" ]
 
 var airport_data = [];
