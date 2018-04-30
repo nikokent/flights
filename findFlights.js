@@ -89,7 +89,7 @@ var main = function(req, res){
         
 
     var flight = function(origin, destination, completion, bad){
-        var url = "http://partners.api.skyscanner.net/apiservices/browsequotes/v1.0/US/usd/en-US/"+origin+"/"+destination+"/anytime/anytime?apikey=prtl6749387986743898559646983194";
+        var url = process.env.url1+origin+"/"+destination+process.env.url2;
         request(url, { json: true }, (err, resp, body) => {
             if (err) { return console.log(err); }
             if( body == null || body['Quotes'] == null){
